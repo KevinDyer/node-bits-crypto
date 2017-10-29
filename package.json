@@ -1,0 +1,16 @@
+{
+  "name": "bits-crypto",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:KevinDyer/node-bits-crypto.git",
+  "author": "Kevin Dyer <kevin.m.dyer@gmail.com>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1"
+  },
+  "scripts": {
+    "test": "mocha --recursive"
+  }
+}
