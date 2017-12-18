@@ -3,7 +3,6 @@
 
   const path = require('path');
   const fs = require('fs');
-  const chai = require('chai');
   const {PassThrough} = require('stream');
   const Encrypter = require('./../src/encrypter');
   const Decrypter = require('./../src/decrypter');
@@ -12,8 +11,7 @@
   const TEST_PUBLIC_KEY_FILEPATH = path.join(__dirname, './fixtures/keys/test-key.pub');
   const SIGNATURE_PRIVATE_KEY_FILEPATH = path.join(__dirname, './fixtures/keys/signature-key.pem');
   const SIGNATURE_PUBLIC_KEY_FILEPATH = path.join(__dirname, './fixtures/keys/signature-key.pub');
-
-  const expect = chai.expect;
+  const INPUT_FILEPATH = path.join(__dirname, './fixtures/random-number-1.0.0.tgz');
 
   function readFile(file, options) {
     return new Promise((resolve, reject) => {
@@ -60,14 +58,12 @@
       });
     });
 
-    it.skip('should encrypt and decrypt data', () => {
+    it('should encrypt and decrypt data', () => {
       const encryptOutput = new PassThrough();
-      const decryptOutput = new PassThrough();
       return Promise.resolve()
       .then(() => {
-        const input = new PassThrough();
-        input.end(Buffer.from('foo'));
-        const encrypter = new Encrypter();
+        const input = fs.createReadStream(INPUT_FILEPATH);
+        const encrypter = new Encrypter({verbose: true});
         const options = {
           input: input,
           output: encryptOutput,
@@ -80,28 +76,26 @@
       .then((signature) => {
         const input = new PassThrough();
         input.write(signature);
-        encryptOutput.pipe(input);
-        const decrypter = new Decrypter();
+        let buf = Buffer.alloc(0);
+        function onData(data) {
+          buf = Buffer.concat([buf, data], buf.length + data.length);
+          if (buf.length < signature.length) {
+            return;
+          }
+          encryptOutput.removeListener('data', onData);
+          encryptOutput.unshift(buf.slice(signature.length));
+          encryptOutput.pipe(input);
+        }
+        encryptOutput.on('data', onData);
+        const decrypter = new Decrypter({verbose: true});
         const options = {
           input: input,
-          output: decryptOutput,
+          output: fs.createWriteStream('/tmp/output.tgz'),
           encryptionKey: testPrivateKey,
           signatureKey: signaturePublicKey,
+          signature: signature,
         };
         return decrypter.decrypt(options);
-      })
-      .then(() => {
-        return new Promise((resolve, reject) => {
-          decryptOutput.once('error', reject);
-          let data = Buffer.alloc(0);
-          decryptOutput.on('data', (chunk) => {
-            data = Buffer.concat([data, chunk], data.length + chunk.length);
-          });
-          decryptOutput.once('end', () => resolve(data));
-        });
-      })
-      .then((data) => {
-        expect(data.toString()).to.equal('foo');
       });
     });
   });

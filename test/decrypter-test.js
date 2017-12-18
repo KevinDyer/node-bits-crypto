@@ -41,7 +41,7 @@
     describe('decrypt', () => {
       let decrypter = null;
       beforeEach('Create decrypter', () => {
-        decrypter = new Decrypter({verbose: true});
+        decrypter = new Decrypter();
       });
 
       function callDecrypt(decrypter, ...params) {

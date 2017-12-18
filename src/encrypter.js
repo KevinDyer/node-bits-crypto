@@ -79,7 +79,7 @@
         outputWriter.write(encryptedSalt);
         signerWriter.write(encryptedSalt);
         if (this._includeFilename) {
-          const encryptedFilename = crypto.publicEncrypt(encryptionKey, password);
+          const encryptedFilename = crypto.publicEncrypt(encryptionKey, Buffer.from(filename));
           outputWriter.write(encryptedFilename);
           signerWriter.write(encryptedFilename);
         }
