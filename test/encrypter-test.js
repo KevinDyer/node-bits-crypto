@@ -91,11 +91,11 @@
         };
         const options = {input: input, output: output, encryptionKey: encryptionKey, signatureKey: signatureKey, filename: 'test.enc'};
         return Promise.resolve()
-        .then(() => encrypter.encrypt(options))
-        .then((signature) => {
-          const bytesRead = input.bytesRead + (BLOCK_SIZE - (input.bytesRead % BLOCK_SIZE));
-          expect(output.length).to.equal(512 + 512 + 512 + 512 + bytesRead);
-        });
+          .then(() => encrypter.encrypt(options))
+          .then((signature) => {
+            const bytesRead = input.bytesRead + (BLOCK_SIZE - (input.bytesRead % BLOCK_SIZE));
+            expect(output.length).to.equal(512 + 512 + 512 + 512 + bytesRead);
+          });
       });
     });
   });

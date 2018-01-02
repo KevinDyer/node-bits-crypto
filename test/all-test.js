@@ -29,74 +29,74 @@
     let testPrivateKey = null;
     before('Read encryption key', () => {
       return readFile(TEST_PRIVATE_KEY_FILEPATH)
-      .then((data) => {
-        testPrivateKey = data;
-      });
+        .then((data) => {
+          testPrivateKey = data;
+        });
     });
 
     let testPublicKey = null;
     before('Read encryption key', () => {
       return readFile(TEST_PUBLIC_KEY_FILEPATH)
-      .then((data) => {
-        testPublicKey = data;
-      });
+        .then((data) => {
+          testPublicKey = data;
+        });
     });
 
     let signaturePrivateKey = null;
     before('Read encryption key', () => {
       return readFile(SIGNATURE_PRIVATE_KEY_FILEPATH)
-      .then((data) => {
-        signaturePrivateKey = data;
-      });
+        .then((data) => {
+          signaturePrivateKey = data;
+        });
     });
 
     let signaturePublicKey = null;
     before('Read encryption key', () => {
       return readFile(SIGNATURE_PUBLIC_KEY_FILEPATH)
-      .then((data) => {
-        signaturePublicKey = data;
-      });
+        .then((data) => {
+          signaturePublicKey = data;
+        });
     });
 
     it('should encrypt and decrypt data', () => {
       const encryptOutput = new PassThrough();
       return Promise.resolve()
-      .then(() => {
-        const input = fs.createReadStream(INPUT_FILEPATH);
-        const encrypter = new Encrypter({verbose: true});
-        const options = {
-          input: input,
-          output: encryptOutput,
-          encryptionKey: testPublicKey,
-          signatureKey: signaturePrivateKey,
-          filename: 'test.enc',
-        };
-        return encrypter.encrypt(options);
-      })
-      .then((signature) => {
-        const input = new PassThrough();
-        input.write(signature);
-        let buf = Buffer.alloc(0);
-        function onData(data) {
-          buf = Buffer.concat([buf, data], buf.length + data.length);
-          if (buf.length < signature.length) {
-            return;
+        .then(() => {
+          const input = fs.createReadStream(INPUT_FILEPATH);
+          const encrypter = new Encrypter({verbose: false});
+          const options = {
+            input: input,
+            output: encryptOutput,
+            encryptionKey: testPublicKey,
+            signatureKey: signaturePrivateKey,
+            filename: 'test.enc',
+          };
+          return encrypter.encrypt(options);
+        })
+        .then((signature) => {
+          const input = new PassThrough();
+          input.write(signature);
+          let buf = Buffer.alloc(0);
+          function onData(data) {
+            buf = Buffer.concat([buf, data], buf.length + data.length);
+            if (buf.length < signature.length) {
+              return;
+            }
+            encryptOutput.removeListener('data', onData);
+            encryptOutput.unshift(buf.slice(signature.length));
+            encryptOutput.pipe(input);
           }
-          encryptOutput.removeListener('data', onData);
-          encryptOutput.unshift(buf.slice(signature.length));
-          encryptOutput.pipe(input);
-        }
-        encryptOutput.on('data', onData);
-        const decrypter = new Decrypter({verbose: true});
-        const options = {
-          input: input,
-          output: fs.createWriteStream('/tmp/output.tgz'),
-          encryptionKey: testPrivateKey,
-          signatureKey: signaturePublicKey,
-          signature: signature,
-        };
-        return decrypter.decrypt(options);
-      });
+          encryptOutput.on('data', onData);
+          const decrypter = new Decrypter({verbose: false});
+          const options = {
+            input: input,
+            output: fs.createWriteStream('/tmp/output.tgz'),
+            encryptionKey: testPrivateKey,
+            signatureKey: signaturePublicKey,
+            signature: signature,
+          };
+          return decrypter.decrypt(options);
+        });
     });
   });
 })();

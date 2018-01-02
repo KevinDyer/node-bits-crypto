@@ -14,7 +14,7 @@
 
     write(chunk, encoding, callback) {
       this._chain = this._chain
-      .then(() => this._write(chunk, encoding, callback));
+        .then(() => this._write(chunk, encoding, callback));
       return this._chain;
     }
 
@@ -34,7 +34,8 @@
 
     end(chunk, encoding, callback) {
       this._chain = this._chain
-      .then(() => this._end(chunk, encoding, callback));
+        .then(() => this._end(chunk, encoding, callback));
+      return this._chain;
     }
 
     _end(chunk, encoding, callback) {

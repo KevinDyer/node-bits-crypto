@@ -69,36 +69,39 @@
       const signer = crypto.createSign('sha256');
       const signerWriter = new NiceWriter(signer);
       return Promise.resolve()
-      .then(() => this._createPasswordSaltKeyAndIV())
-      .then(({password, salt, iv, key}) => {
-        outputWriter.write(Buffer.alloc(512));
-        const encryptedPassword = crypto.publicEncrypt(encryptionKey, password);
-        outputWriter.write(encryptedPassword);
-        signerWriter.write(encryptedPassword);
-        const encryptedSalt = crypto.publicEncrypt(encryptionKey, salt);
-        outputWriter.write(encryptedSalt);
-        signerWriter.write(encryptedSalt);
-        if (this._includeFilename) {
-          const encryptedFilename = crypto.publicEncrypt(encryptionKey, Buffer.from(filename));
-          outputWriter.write(encryptedFilename);
-          signerWriter.write(encryptedFilename);
-        }
-        const cipher = crypto.createCipheriv('AES-256-CBC', key, iv);
-        cipher.on('data', (data) => {
-          outputWriter.write(data);
-          signerWriter.write(data);
+        .then(() => this._createPasswordSaltKeyAndIV())
+        .then(({password, salt, iv, key}) => {
+          if (this._includeFilename) {
+            this._debug(`Filename:            %s`, filename);
+          }
+          outputWriter.write(Buffer.alloc(512));
+          const encryptedPassword = crypto.publicEncrypt(encryptionKey, password);
+          signerWriter.write(encryptedPassword);
+          outputWriter.write(encryptedPassword);
+          const encryptedSalt = crypto.publicEncrypt(encryptionKey, salt);
+          signerWriter.write(encryptedSalt);
+          outputWriter.write(encryptedSalt);
+          if (this._includeFilename) {
+            const encryptedFilename = crypto.publicEncrypt(encryptionKey, Buffer.from(filename));
+            signerWriter.write(encryptedFilename);
+            outputWriter.write(encryptedFilename);
+          }
+          const cipher = crypto.createCipheriv('AES-256-CBC', key, iv);
+          cipher.on('data', (data) => {
+            signerWriter.write(data);
+            outputWriter.write(data);
+          });
+          cipher.on('end', () => {
+            signerWriter.end();
+            outputWriter.end();
+          });
+          input.pipe(cipher);
+          return this._waitUntilWritablesFinish([signer, output]);
+        })
+        .then(() => {
+          const signature = signer.sign(signatureKey);
+          return signature;
         });
-        cipher.on('end', () => {
-          outputWriter.end();
-          signerWriter.end();
-        });
-        input.pipe(cipher);
-        return this._waitUntilWritablesFinish([output, signer]);
-      })
-      .then(() => {
-        const signature = signer.sign(signatureKey);
-        return signature;
-      });
     }
 
     _waitUntilWritablesFinish(writables) {
@@ -118,16 +121,16 @@
 
     _createPasswordSaltKeyAndIV() {
       return Promise.resolve()
-      .then(() => Promise.all([this._createPassword(), this._createSaltSuffix()]))
-      .then(([password, saltSuffix]) => {
-        const {iv, key} = deriveKeyAndIV(password, saltSuffix);
-        const salt = Buffer.concat([SALT_PREFIX, saltSuffix], SALT_PREFIX.length + saltSuffix.length);
-        this._debug(`Random Password:     %s`, password.toString('hex'));
-        this._debug(`Random Salt(suffix): %s`, saltSuffix.toString('hex'));
-        this._debug(`IV:                  %s`, iv.toString('hex'));
-        this._debug(`KEY:                 %s`, key.toString('hex'));
-        return {password: password, salt: salt, iv: iv, key: key};
-      });
+        .then(() => Promise.all([this._createPassword(), this._createSaltSuffix()]))
+        .then(([password, saltSuffix]) => {
+          const {iv, key} = deriveKeyAndIV(password, saltSuffix);
+          const salt = Buffer.concat([SALT_PREFIX, saltSuffix], SALT_PREFIX.length + saltSuffix.length);
+          this._debug(`Random Password:     %s`, password.toString('hex'));
+          this._debug(`Random Salt(suffix): %s`, saltSuffix.toString('hex'));
+          this._debug(`IV:                  %s`, iv.toString('hex'));
+          this._debug(`KEY:                 %s`, key.toString('hex'));
+          return {password: password, salt: salt, iv: iv, key: key};
+        });
     }
 
     _createPassword() {
