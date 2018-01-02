@@ -22,7 +22,7 @@
 
   const stream = require('stream');
   const crypto = require('crypto');
-  const {deriveKeyAndIV, isNonEmptyString, BLOCK_SIZE, SALT_PREFIX} = require('./common');
+  const {deriveKeyAndIV, isNonEmptyString, BLOCK_SIZE, KEY_LENGTH, SALT_PREFIX} = require('./common');
   const {NiceWriter} = require('./nice-writer');
 
   function randomBytes(size) {
@@ -134,7 +134,7 @@
     }
 
     _createPassword() {
-      return randomBytes(32);
+      return randomBytes(KEY_LENGTH);
     }
 
     _createSaltSuffix() {

@@ -113,6 +113,7 @@
           if (!verified) {
             return Promise.reject(new Error('signature check failed'));
           }
+          return {filename: holder.filename};
         });
     }
 

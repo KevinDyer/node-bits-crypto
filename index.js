@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const CryptoManager = require('./src/crypto/crypto-manager');
-
-  module.exports.CryptoManager = CryptoManager;
+  module.exports.Encrypter = require('./src/encrypter');
+  module.exports.Decrypter = require('./src/decrypter');
+  module.exports.NiceWriter = require('./src/nice-writer');
 })();
