@@ -1,12 +1,17 @@
 {
-  "name": "bits-crypto",
+  "name": "@skidder/bits-crypto",
   "version": "1.0.0",
   "main": "index.js",
-  "bin": "src/cli.js",
+  "bin": {
+    "encrypt-data": "cmd/encrypt-data.js",
+    "decrypt-data": "cmd/decrypt-data.js"
+  },
   "repository": "git@github.com:KevinDyer/node-bits-crypto.git",
   "author": "Kevin Dyer <kevin.m.dyer@gmail.com>",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "commander": "^2.12.2"
+  },
   "devDependencies": {
     "chai": "^4.1.2",
     "eslint": "^4.13.1",
